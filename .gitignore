@@ -1,3 +1,110 @@
 
-# ✨ 忽略超大数据包
+# ===========================================
+# AI音乐检测项目 - Git忽略配置
+# ===========================================
+
+# ✨ 超大数据文件（GitHub限制100MB）
 附件一：待评测音乐.zip
+附件四：测试音乐.mp3
+NKUMMF_2025_B.pdf
+
+# 🎵 音频数据目录
+附件一：待评测音乐/
+附件六：训练数据/
+extracted_music/
+val_music/
+
+# 📊 Excel临时文件
+.~*.xlsx
+*.tmp
+~$*.xlsx
+
+# 🐍 Python相关
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# 🌐 虚拟环境
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# 🔧 IDE和编辑器
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.project
+.pydevproject
+
+# 💻 系统文件
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+desktop.ini
+
+# 📝 日志文件
+*.log
+logs/
+
+# 🔒 敏感信息
+.env.local
+.env.*.local
+secrets.json
+config.json
+
+# 🧪 测试和覆盖率
+.coverage
+.pytest_cache/
+.tox/
+.nox/
+htmlcov/
+.coverage.*
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+
+# 📦 依赖锁定文件
+poetry.lock
+Pipfile.lock
+
+# 🚀 部署文件
+.vercel
+.netlify
+
+# 🎯 项目特定
+*.pkl
+*.joblib
+*.model
+temp/
+tmp/
+cache/

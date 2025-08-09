@@ -4,31 +4,40 @@ import os
 import zipfile
 import pandas as pd
 import shutil
+import glob
+import re
 from ai_music_detector import MathematicalAIMusicDetector
 import warnings
 warnings.filterwarnings('ignore')
 
-def extract_audio_files():
-    """解压附件一中的音频文件"""
+def get_audio_files_directory():
+    """获取音频文件目录"""
+    # 检查是否已经解压
+    extracted_dir = "附件一：待评测音乐"
+    if os.path.exists(extracted_dir):
+        print(f"使用已解压的音频文件目录: {extracted_dir}")
+        return extracted_dir
+    
+    # 如果没有解压目录，尝试解压
     zip_file = "附件一：待评测音乐.zip"
     extract_dir = "extracted_music"
     
-    if not os.path.exists(zip_file):
-        print(f"错误：未找到 {zip_file}")
+    if os.path.exists(zip_file):
+        print(f"解压 {zip_file}...")
+        
+        # 创建解压目录
+        if os.path.exists(extract_dir):
+            shutil.rmtree(extract_dir)
+        os.makedirs(extract_dir)
+        
+        # 解压文件
+        with zipfile.ZipFile(zip_file, 'r') as zip_ref:
+            zip_ref.extractall(extract_dir)
+        
+        return extract_dir
+    else:
+        print(f"错误：未找到音频文件，请检查 {extracted_dir} 或 {zip_file}")
         return None
-    
-    print(f"解压 {zip_file}...")
-    
-    # 创建解压目录
-    if os.path.exists(extract_dir):
-        shutil.rmtree(extract_dir)
-    os.makedirs(extract_dir)
-    
-    # 解压文件
-    with zipfile.ZipFile(zip_file, 'r') as zip_ref:
-        zip_ref.extractall(extract_dir)
-    
-    return extract_dir
 
 def process_evaluation_set():
     """处理评估集音频文件"""
@@ -36,15 +45,15 @@ def process_evaluation_set():
     print("=== AI生成音乐检测 - 处理附件一 ===")
     print()
     
-    # 解压音频文件
-    extract_dir = extract_audio_files()
-    if not extract_dir:
+    # 获取音频文件目录
+    audio_dir = get_audio_files_directory()
+    if not audio_dir:
         return
     
     # 初始化检测器
     print("1. 初始化数学特征检测模型...")
     detector = MathematicalAIMusicDetector()
-    detector.train_with_synthetic_data()
+    detector.train()
     
     # 读取附件二模板
     template_file = "附件二：评估集结果.xlsx"
@@ -52,26 +61,31 @@ def process_evaluation_set():
     
     print(f"2. 处理 {len(df_template)} 个音频文件...")
     
-    # 查找所有音频文件
+    # 直接从音频目录查找文件
     audio_files = []
-    for root, dirs, files in os.walk(extract_dir):
-        for file in files:
-            if file.lower().endswith(('.mp3', '.wav', '.aac', '.flac')):
-                audio_files.append(os.path.join(root, file))
+    for ext in ['*.mp3', '*.aac', '*.wav', '*.flac']:
+        audio_files.extend(glob.glob(os.path.join(audio_dir, ext)))
     
     print(f"   发现 {len(audio_files)} 个音频文件")
     
-    # 创建文件名映射
+    # 创建文件名映射（文件名就是数字）
     file_mapping = {}
     for audio_file in audio_files:
         basename = os.path.basename(audio_file)
         name_without_ext = os.path.splitext(basename)[0]
-        # 尝试提取数字
-        import re
-        numbers = re.findall(r'\d+', name_without_ext)
-        if numbers:
-            file_number = int(numbers[0])
+        try:
+            # 文件名直接是数字（如 001.aac, 002.mp3）
+            file_number = int(name_without_ext)
             file_mapping[file_number] = audio_file
+        except ValueError:
+            # 如果文件名不是纯数字，尝试提取数字
+            numbers = re.findall(r'\d+', name_without_ext)
+            if numbers:
+                file_number = int(numbers[0])
+                file_mapping[file_number] = audio_file
+    
+    print(f"   文件映射示例: {dict(list(file_mapping.items())[:5])}")
+    print(f"   文件编号范围: {min(file_mapping.keys()) if file_mapping else 'N/A'} - {max(file_mapping.keys()) if file_mapping else 'N/A'}")
     
     # 处理每个文件
     results = []
@@ -216,5 +230,30 @@ def calculate_quality_score(features, ai_probability):
     # 确保评分在0-1范围内
     return max(0.0, min(1.0, total_score))
 
+def test_audio_files():
+    """测试音频文件是否可以正确读取"""
+    audio_dir = get_audio_files_directory()
+    if not audio_dir:
+        return
+    
+    # 获取前5个音频文件进行测试
+    audio_files = []
+    for ext in ['*.mp3', '*.aac', '*.wav', '*.flac']:
+        audio_files.extend(glob.glob(os.path.join(audio_dir, ext)))
+    
+    print(f"测试前5个音频文件:")
+    for i, audio_file in enumerate(audio_files[:5]):
+        basename = os.path.basename(audio_file)
+        try:
+            import librosa
+            y, sr = librosa.load(audio_file, sr=22050, duration=5)  # 只加载5秒
+            print(f"  ✓ {basename}: {len(y)/sr:.1f}秒, {sr}Hz")
+        except Exception as e:
+            print(f"  ✗ {basename}: {e}")
+
 if __name__ == "__main__":
-    process_evaluation_set()
+    import sys
+    if len(sys.argv) > 1 and sys.argv[1] == "test":
+        test_audio_files()
+    else:
+        process_evaluation_set()

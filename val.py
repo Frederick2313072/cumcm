@@ -17,7 +17,7 @@ def main():
     # 初始化检测器
     print("1. 初始化检测模型...")
     detector = MathematicalAIMusicDetector()
-    detector.train_with_synthetic_data()
+    detector.train()
     
     # 查找val_music文件夹
     val_music_dir = "val_music"
